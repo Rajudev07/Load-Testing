@@ -1,9 +1,14 @@
 import json
 import os
+import subprocess
 from datetime import datetime, timezone
 
 with open("performance/k6-summary.json", "r", encoding="utf-8") as f:
     summary = json.load(f)
+checked_out_sha = subprocess.check_output(
+    ["git", "rev-parse", "HEAD"],
+    text=True
+).strip()
 
 metrics = summary["metrics"]
 
@@ -12,7 +17,9 @@ result = {
     "provider": "github_actions",
     "repository_full_name": os.environ["GITHUB_REPOSITORY"],
     "branch": os.environ["GITHUB_REF_NAME"],
-    "commit_sha": os.environ["GITHUB_SHA"],
+    "commit_sha": checked_out_sha,
+    "requested_commit_sha": os.environ["ER010_TARGET_SHA"],
+    "correlation_id": os.environ["ER010_CORRELATION_ID"],
     "github_run_id": os.environ["GITHUB_RUN_ID"],
     "environment_id": "github-hosted-er010-v1",
     "workload_id": "zeroui-er010-http-get-v1",

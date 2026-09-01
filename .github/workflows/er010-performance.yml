@@ -2,6 +2,15 @@ name: ER-010 Performance
 
 on:
   workflow_dispatch:
+    inputs:
+      target_sha:
+        description: "Exact commit SHA to performance-test"
+        required: true
+        type: string
+      correlation_id:
+        description: "ZeroUI correlation ID for this evaluation"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,6 +22,19 @@ jobs:
     steps:
       - name: Checkout requested commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_sha }}
+
+      - name: Verify exact commit
+        run: |
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          echo "Requested SHA: ${{ inputs.target_sha }}"
+          echo "Checked out SHA: $ACTUAL_SHA"
+
+          if [ "$ACTUAL_SHA" != "${{ inputs.target_sha }}" ]; then
+            echo "Checked-out commit does not match requested target_sha"
+            exit 1
+          fi
 
       - name: Start application
         run: |
@@ -43,6 +65,9 @@ jobs:
             performance/er010.js
 
       - name: Build ER-010 evidence
+        env:
+          ER010_CORRELATION_ID: ${{ inputs.correlation_id }}
+          ER010_TARGET_SHA: ${{ inputs.target_sha }}
         run: |
           python performance/build_result.py
 
