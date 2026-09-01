@@ -17,10 +17,10 @@ result = {
     "environment_id": "github-hosted-er010-v1",
     "workload_id": "zeroui-er010-http-get-v1",
     "measured_at_utc": datetime.now(timezone.utc).isoformat(),
-    "p95_latency_ms": metrics["http_req_duration"]["values"]["p(95)"],
-    "error_rate": metrics["http_req_failed"]["values"]["rate"],
-    "throughput_rps": metrics["http_reqs"]["values"]["rate"],
-}
+    "p95_latency_ms": metrics["http_req_duration"]["p(95)"],
+    "error_rate": metrics["http_req_failed"]["value"],
+    "throughput_rps": metrics["http_reqs"]["rate"],
+    }
 
 with open("er010-performance-result.json", "w", encoding="utf-8") as f:
     json.dump(result, f, indent=2)
