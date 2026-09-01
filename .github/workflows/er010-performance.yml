@@ -1,0 +1,54 @@
+name: ER-010 Performance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  er010-performance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout requested commit
+        uses: actions/checkout@v4
+
+      - name: Start application
+        run: |
+          python app/server.py > app.log 2>&1 &
+          echo $! > app.pid
+
+      - name: Wait for application
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/ > /dev/null; then
+              echo "Application is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Application did not become ready"
+          cat app.log || true
+          exit 1
+
+      - name: Install k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run ER-010 load test
+        run: |
+          k6 run \
+            --summary-export=performance/k6-summary.json \
+            performance/er010.js
+
+      - name: Build ER-010 evidence
+        run: |
+          python performance/build_result.py
+
+      - name: Upload ER-010 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: er010-performance-result
+          path: er010-performance-result.json
+          if-no-files-found: error
